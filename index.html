@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PayGuard — Website Payment Fraud Detection</title>
+  <style>
+    :root {
+      --bg: #f0f4ff;
+      --surface: #ffffff;
+      --surface2: #f7f9ff;
+      --border: #e2e8f8;
+      --accent: #4f46e5;
+      --accent2: #06b6d4;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --success: #10b981;
+      --text: #1e293b;
+      --muted: #64748b;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* NAV */
+    nav {
+      background:var(--surface); border-bottom:1px solid var(--border);
+      padding:0 32px; height:64px; display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100; box-shadow:0 1px 8px rgba(0,0,0,.06);
+    }
+    .brand { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:800; color:var(--accent); }
+    .brand-icon { width:34px; height:34px; background:var(--accent); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; }
+    .nav-pills { display:flex; gap:4px; }
+    .pill { padding:7px 16px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; color:var(--muted); transition:all .2s; }
+    .pill:hover, .pill.active { background:rgba(79,70,229,.1); color:var(--accent); }
+    .nav-right { display:flex; align-items:center; gap:12px; }
+    .live-badge { background:var(--success); color:#fff; font-size:11px; padding:4px 10px; border-radius:20px; font-weight:700; }
+    .user-chip { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); padding:6px 14px 6px 6px; border-radius:24px; font-size:13px; cursor:pointer; }
+    .user-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#4f46e5,#06b6d4); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:11px; }
+
+    /* LAYOUT */
+    .layout { display:grid; grid-template-columns:240px 1fr; min-height:calc(100vh - 64px); }
+
+    aside {
+      background:var(--surface); border-right:1px solid var(--border); padding:20px 14px;
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .sec-label { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); padding:14px 10px 6px; font-weight:600; }
+    .s-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; font-size:14px; color:var(--muted); cursor:pointer; transition:all .2s; }
+    .s-item:hover { background:var(--surface2); color:var(--text); }
+    .s-item.active { background:rgba(79,70,229,.1); color:var(--accent); font-weight:600; }
+    .s-badge { margin-left:auto; font-size:10px; font-weight:700; background:var(--danger); color:#fff; padding:2px 7px; border-radius:10px; }
+
+    main { padding:28px 32px; }
+    .ph { margin-bottom:28px; }
+    .ph h1 { font-size:22px; font-weight:800; }
+    .ph p { color:var(--muted); font-size:14px; margin-top:4px; }
+
+    /* STATS */
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+    .sc { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px 22px; }
+    .sc-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; margin-bottom:12px; }
+    .sc-label { font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+    .sc-val { font-size:26px; font-weight:800; margin:4px 0; }
+    .sc-change { font-size:12px; font-weight:600; }
+    .pos { color:var(--success); }
+    .neg { color:var(--danger); }
+
+    .g2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+    .g3 { display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:20px; }
+
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px; box-shadow:0 1px 6px rgba(0,0,0,.04); }
+    .ch { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+    .ct { font-size:15px; font-weight:700; }
+    .ca { font-size:12px; color:var(--accent); cursor:pointer; font-weight:600; }
+
+    /* TIMELINE */
+    .timeline { display:flex; flex-direction:column; gap:0; }
+    .tl-item { display:flex; gap:14px; padding:12px 0; border-bottom:1px solid var(--border); }
+    .tl-item:last-child { border:none; }
+    .tl-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+    .tl-body { flex:1; }
+    .tl-title { font-size:13px; font-weight:600; }
+    .tl-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+    .tl-amount { font-size:14px; font-weight:800; text-align:right; }
+    .tl-status { font-size:11px; text-align:right; margin-top:2px; }
+
+    /* CHIP */
+    .chip { display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; }
+    .chip-red { background:rgba(239,68,68,.1); color:var(--danger); }
+    .chip-green { background:rgba(16,185,129,.1); color:var(--success); }
+    .chip-amber { background:rgba(245,158,11,.1); color:var(--warn); }
+    .chip-blue { background:rgba(6,182,212,.1); color:var(--accent2); }
+
+    /* HEATMAP GRID */
+    .heatmap { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+    .hm-cell { aspect-ratio:1; border-radius:4px; }
+
+    /* DEEP LEARNING VIZ */
+    .dl-layers { display:flex; align-items:center; gap:0; justify-content:center; padding:10px 0; }
+    .dl-layer { display:flex; flex-direction:column; gap:6px; align-items:center; }
+    .dl-node { width:20px; height:20px; border-radius:50%; }
+    .dl-arrow { color:var(--muted); font-size:18px; padding:0 6px; align-self:center; }
+    .dl-label { font-size:10px; color:var(--muted); margin-top:6px; text-align:center; }
+
+    /* RISK GAUGE */
+    .gauge-row { display:flex; gap:12px; flex-wrap:wrap; }
+    .gauge-item { flex:1; min-width:80px; background:var(--surface2); border-radius:10px; padding:12px; text-align:center; }
+    .gauge-val { font-size:22px; font-weight:800; }
+    .gauge-label { font-size:11px; color:var(--muted); margin-top:4px; }
+
+    /* TABLE */
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th { text-align:left; padding:8px 10px; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.4px; font-weight:600; border-bottom:2px solid var(--border); }
+    td { padding:11px 10px; border-bottom:1px solid var(--border); }
+    tr:hover td { background:var(--surface2); }
+    tr:last-child td { border:none; }
+
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+    .blink { animation:blink 1.5s infinite; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <div class="brand-icon">💠</div>
+    PayGuard
+  </div>
+  <div class="nav-pills">
+    <div class="pill active">Overview</div>
+    <div class="pill">Transactions</div>
+    <div class="pill">Detection Engine</div>
+    <div class="pill">Merchants</div>
+    <div class="pill">Reports</div>
+  </div>
+  <div class="nav-right">
+    <div class="live-badge blink">⬤ MONITORING</div>
+    <div class="user-chip">
+      <div class="user-avatar">LS</div>
+      Lohitha
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside>
+    <div class="sec-label">Main</div>
+    <div class="s-item active">📊 Overview</div>
+    <div class="s-item">🌐 Web Transactions</div>
+    <div class="s-item">🔍 Fraud Analysis</div>
+
+    <div class="sec-label">Detection</div>
+    <div class="s-item">🧠 Deep Learning Engine</div>
+    <div class="s-item">⚠️ Flagged Sessions <span class="s-badge">12</span></div>
+    <div class="s-item">🗄️ SQL Query Lab</div>
+    <div class="s-item">📡 Behavioral Signals</div>
+
+    <div class="sec-label">Tools</div>
+    <div class="s-item">📦 Scikit-learn Models</div>
+    <div class="s-item">📋 Audit Logs</div>
+    <div class="s-item">⚙️ Configuration</div>
+  </aside>
+
+  <main>
+    <div class="ph">
+      <h1>Payment Fraud Detection</h1>
+      <p>End-to-end deep learning pipeline · Transaction metadata · Behavioral signals · Historical patterns</p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="sc">
+        <div class="sc-icon" style="background:rgba(79,70,229,.1)">🌐</div>
+        <div class="sc-label">Web Transactions Today</div>
+        <div class="sc-val">94,821</div>
+        <div class="sc-change pos">↑ 7.3% vs yesterday</div>
+      </div>
+      <div class="sc">
+        <div class="sc-icon" style="background:rgba(239,68,68,.1)">🚫</div>
+        <div class="sc-label">Fraud Detected</div>
+        <div class="sc-val">1,203</div>
+        <div class="sc-change neg">1.27% fraud rate</div>
+      </div>
+      <div class="sc">
+        <div class="sc-icon" style="background:rgba(16,185,129,.1)">✅</div>
+        <div class="sc-label">Precision Score</div>
+        <div class="sc-val">96.2%</div>
+        <div class="sc-change pos">↑ High precision</div>
+      </div>
+      <div class="sc">
+        <div class="sc-icon" style="background:rgba(6,182,212,.1)">⚡</div>
+        <div class="sc-label">Avg. Detection Time</div>
+        <div class="sc-val">38ms</div>
+        <div class="sc-change pos">↓ 12ms faster</div>
+      </div>
+    </div>
+
+    <!-- ROW 1 -->
+    <div class="g3">
+      <!-- TABLE -->
+      <div class="card">
+        <div class="ch">
+          <div class="ct">Flagged Web Transactions</div>
+          <div class="ca">View All →</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Session ID</th>
+              <th>IP Origin</th>
+              <th>Amount</th>
+              <th>Signal</th>
+              <th>Confidence</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code style="font-size:11px;color:var(--muted)">SES-7841</code></td>
+              <td>🇷🇺 185.220.x.x</td>
+              <td><strong>$4,200</strong></td>
+              <td><span class="chip chip-red">VPN + Proxy</span></td>
+              <td><strong style="color:var(--danger)">98%</strong></td>
+              <td><span class="chip chip-red">Blocked</span></td>
+            </tr>
+            <tr>
+              <td><code style="font-size:11px;color:var(--muted)">SES-7840</code></td>
+              <td>🇺🇸 192.168.x.x</td>
+              <td><strong>$59.99</strong></td>
+              <td><span class="chip chip-green">Normal</span></td>
+              <td><strong style="color:var(--success)">4%</strong></td>
+              <td><span class="chip chip-green">Cleared</span></td>
+            </tr>
+            <tr>
+              <td><code style="font-size:11px;color:var(--muted)">SES-7839</code></td>
+              <td>🇨🇳 103.59.x.x</td>
+              <td><strong>$12,500</strong></td>
+              <td><span class="chip chip-red">Rapid Retries</span></td>
+              <td><strong style="color:var(--danger)">91%</strong></td>
+              <td><span class="chip chip-red">Blocked</span></td>
+            </tr>
+            <tr>
+              <td><code style="font-size:11px;color:var(--muted)">SES-7838</code></td>
+              <td>🇬🇧 82.45.x.x</td>
+              <td><strong>$230.00</strong></td>
+              <td><span class="chip chip-amber">New Device</span></td>
+              <td><strong style="color:var(--warn)">58%</strong></td>
+              <td><span class="chip chip-amber">Review</span></td>
+            </tr>
+            <tr>
+              <td><code style="font-size:11px;color:var(--muted)">SES-7837</code></td>
+              <td>🇩🇪 178.22.x.x</td>
+              <td><strong>$880.00</strong></td>
+              <td><span class="chip chip-amber">Off-hours</span></td>
+              <td><strong style="color:var(--warn)">63%</strong></td>
+              <td><span class="chip chip-amber">Review</span></td>
+            </tr>
+            <tr>
+              <td><code style="font-size:11px;color:var(--muted)">SES-7836</code></td>
+              <td>🇮🇳 49.36.x.x</td>
+              <td><strong>$149.00</strong></td>
+              <td><span class="chip chip-green">Normal</span></td>
+              <td><strong style="color:var(--success)">8%</strong></td>
+              <td><span class="chip chip-green">Cleared</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- RIGHT -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <!-- Gauge -->
+        <div class="card">
+          <div class="ch"><div class="ct">🎯 Model Metrics</div></div>
+          <div class="gauge-row">
+            <div class="gauge-item">
+              <div class="gauge-val" style="color:var(--accent)">96.2%</div>
+              <div class="gauge-label">Precision</div>
+            </div>
+            <div class="gauge-item">
+              <div class="gauge-val" style="color:var(--success)">94.8%</div>
+              <div class="gauge-label">Recall</div>
+            </div>
+          </div>
+          <div class="gauge-row" style="margin-top:10px;">
+            <div class="gauge-item">
+              <div class="gauge-val" style="color:var(--accent2)">0.955</div>
+              <div class="gauge-label">F1 Score</div>
+            </div>
+            <div class="gauge-item">
+              <div class="gauge-val" style="color:var(--warn)">0.991</div>
+              <div class="gauge-label">AUC-ROC</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deep Learning Architecture -->
+        <div class="card">
+          <div class="ch"><div class="ct">🧠 Neural Net Layers</div></div>
+          <div class="dl-layers">
+            <div class="dl-layer">
+              <div class="dl-node" style="background:#4f46e5"></div>
+              <div class="dl-node" style="background:#4f46e5"></div>
+              <div class="dl-node" style="background:#4f46e5"></div>
+              <div class="dl-label">Input<br/>Layer</div>
+            </div>
+            <div class="dl-arrow">›</div>
+            <div class="dl-layer">
+              <div class="dl-node" style="background:#06b6d4"></div>
+              <div class="dl-node" style="background:#06b6d4"></div>
+              <div class="dl-node" style="background:#06b6d4"></div>
+              <div class="dl-node" style="background:#06b6d4"></div>
+              <div class="dl-label">Hidden<br/>256</div>
+            </div>
+            <div class="dl-arrow">›</div>
+            <div class="dl-layer">
+              <div class="dl-node" style="background:#06b6d4"></div>
+              <div class="dl-node" style="background:#06b6d4"></div>
+              <div class="dl-node" style="background:#06b6d4"></div>
+              <div class="dl-label">Hidden<br/>128</div>
+            </div>
+            <div class="dl-arrow">›</div>
+            <div class="dl-layer">
+              <div class="dl-node" style="background:#10b981"></div>
+              <div class="dl-label">Output<br/>Fraud?</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px;">Scikit-learn · MLPClassifier · 42 features</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="g2">
+      <!-- Behavioral Signals -->
+      <div class="card">
+        <div class="ch"><div class="ct">📡 Behavioral Signal Heatmap (Last 24h)</div></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:12px;color:var(--muted);">
+          <span>Low Risk</span><span>→</span><span>High Risk</span>
+        </div>
+        <div class="heatmap" id="hm"></div>
+        <div style="margin-top:14px;display:flex;gap:16px;flex-wrap:wrap;">
+          <span style="font-size:12px"><span style="color:var(--danger);font-weight:700">●</span> VPN/Proxy Detected</span>
+          <span style="font-size:12px"><span style="color:var(--warn);font-weight:700">●</span> Off-hours Activity</span>
+          <span style="font-size:12px"><span style="color:var(--accent2);font-weight:700">●</span> New Device</span>
+          <span style="font-size:12px"><span style="color:var(--success);font-weight:700">●</span> Normal Pattern</span>
+        </div>
+      </div>
+
+      <!-- SQL Query Preview -->
+      <div class="card">
+        <div class="ch"><div class="ct">🗄️ SQL — Fraud Query</div></div>
+        <div style="background:#1e293b;border-radius:10px;padding:16px;font-family:monospace;font-size:12px;line-height:1.7;color:#e2e8f8;">
+          <span style="color:#94a3b8">-- High-risk transactions last 24h</span><br/>
+          <span style="color:#60a5fa">SELECT</span> session_id, amount,<br/>
+          &nbsp;&nbsp;ip_country, fraud_score,<br/>
+          &nbsp;&nbsp;signal_type<br/>
+          <span style="color:#60a5fa">FROM</span> transactions<br/>
+          <span style="color:#60a5fa">WHERE</span> created_at &gt; <span style="color:#34d399">NOW() - INTERVAL '24h'</span><br/>
+          &nbsp;&nbsp;<span style="color:#60a5fa">AND</span> fraud_score &gt; <span style="color:#f472b6">0.85</span><br/>
+          &nbsp;&nbsp;<span style="color:#60a5fa">AND</span> status = <span style="color:#fbbf24">'flagged'</span><br/>
+          <span style="color:#60a5fa">ORDER BY</span> fraud_score <span style="color:#60a5fa">DESC</span><br/>
+          <span style="color:#60a5fa">LIMIT</span> <span style="color:#f472b6">100</span>;
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);">Returned <strong style="color:var(--text)">1,203 rows</strong> · Query time: <strong style="color:var(--text)">24ms</strong></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const hm = document.getElementById('hm');
+  const colors = [
+    'rgba(16,185,129,0.2)','rgba(16,185,129,0.4)','rgba(245,158,11,0.3)',
+    'rgba(245,158,11,0.5)','rgba(239,68,68,0.4)','rgba(239,68,68,0.7)'
+  ];
+  for(let i=0;i<7*8;i++){
+    const d=document.createElement('div');
+    d.className='hm-cell';
+    d.style.background=colors[Math.floor(Math.random()*colors.length)];
+    hm.appendChild(d);
+  }
+</script>
+</body>
+</html>
